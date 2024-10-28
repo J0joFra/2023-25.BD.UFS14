@@ -1,0 +1,9 @@
+{
+    "azureFunctions.deploySubpath": "prova_azure/MyProjFolder",
+    "azureFunctions.scmDoBuildDuringDeployment": true,
+    "azureFunctions.projectLanguage": "Python",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.projectLanguageModel": 2,
+    "azureFunctions.projectSubpath": "prova_azure/MyProjFolder"
+}
