@@ -2,6 +2,7 @@ import azure.functions as func
 import datetime
 import json
 import logging
+import os
 
 app = func.FunctionApp()
 
@@ -9,20 +10,18 @@ app = func.FunctionApp()
 def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    name = req.params.get('name')
-    surname = req.params.get('surname')
-    if not name:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            name = req_body.get('name')
-
-    if name:
-        return func.HttpResponse(f"Hello, {name} {surname}. This HTTP triggered function executed successfully.")
-    else:
+    # Carica l'immagine dal file system
+    image_path = os.path.join(os.getcwd(), r"C:\Users\JoaquimFrancalanci\QR_code.svg")  # Modifica con il nome del file immagine
+    try:
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
         return func.HttpResponse(
-             "Ciao This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-             status_code=200
+            image_data,
+            mimetype=r"C:\Users\JoaquimFrancalanci\QR_code.svg",
+            status_code=200
+        )
+    except FileNotFoundError:
+        return func.HttpResponse(
+            "Immagine non trovata",
+            status_code=404
         )
