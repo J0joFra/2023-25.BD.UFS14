@@ -15,7 +15,7 @@ def MyHttpTrigger(req: func.HttpRequest) -> func.HttpResponse:
             image_data = image_file.read()
         return func.HttpResponse(
             image_data,
-            mimetype="image/svg+xml",  # Specifica il mimetype corretto per SVG
+            mimetype="image/svg+xml", 
             status_code=200
         )
     except FileNotFoundError:
