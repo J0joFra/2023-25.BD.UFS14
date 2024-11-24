@@ -20,14 +20,14 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U pytest
-          pip install -r project_work/requirements.pjw.txt
+          pip install -r Periodic_Table/requirements.txt
       
-      - name: List files in project_work
+      - name: List files in Periodic_Table
         run: |
-          cd project_work
+          cd Periodic_Table
           ls -R
 
       - name: Run tests
         run: |
-          cd project_work
+          cd Periodic_Table
           pytest .
