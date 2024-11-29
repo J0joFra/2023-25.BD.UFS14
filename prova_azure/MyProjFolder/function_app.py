@@ -1,70 +1,57 @@
-import azure.functions as func
 import logging
-import os
 import pymongo
-import pandas as pd
+import os
+import json
+import azure.functions as func
 
+# Connessione a MongoDB
+def connect_to_mongodb():
+    mongo_uri = os.getenv("MONGO_URI")  # Usa una variabile d'ambiente per la sicurezza
+    client = pymongo.MongoClient(mongo_uri)
+    db = client["Healthcare"]
+    return db["Pediatri"]
 
-def connect_to_mongodb(uri):
-    client = pymongo.MongoClient(uri)
-    db = client["tavola_periodica"]
-    collezione_elementi = db["elementi"]
-    return client, collezione_elementi
-
-
-def create_db(client):
-    db = client["tavola_periodica"]
-    collezione_elementi = db["elementi"]
-
-    # Percorso relativo al file CSV 
-    csv_path = os.getenv("CSV_PATH", "elements.csv")
-    df = pd.read_csv(csv_path)
-
-    # Inserimento dei dati nella collezione MongoDB
-    elementi_da_inserire = df.to_dict(orient="records")
-    collezione_elementi.insert_many(elementi_da_inserire)
-    return collezione_elementi
-
-
+# Funzione principale dell'Azure Function
 @app.route(route="MyScraperFunction", auth_level=func.AuthLevel.ANONYMOUS)
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("HTTP trigger processed a request.")
 
-    # URI MongoDB (può essere configurato tramite variabile d'ambiente)
-    mongo_uri = os.getenv("MONGO_URI", "mongodb+srv://jofrancalanci:Cf8m2xsQdZgll1hz@element.2o7dxct.mongodb.net/")
+    # Parametri della richiesta
+    nome = req.params.get("nome")
+    if not nome:
+        return func.HttpResponse(
+            "Parametro 'nome' mancante. Usa ?nome=<nome> per effettuare la ricerca.",
+            status_code=400,
+        )
 
     try:
-        # Connessione al database
-        client, collezione_elementi = connect_to_mongodb(mongo_uri)
+        # Connessione a MongoDB
+        collection = connect_to_mongodb()
 
-        # Leggi il parametro di query 'elemento'
-        elemento = req.params.get('elemento')
+        # Ricerca nel database
+        query = {"NomeCompleto": {"$regex": nome, "$options": "i"}}  # Ricerca case-insensitive
+        results = list(collection.find(query, {"_id": 0}))  # Esclude il campo `_id`
 
-        if elemento:
-            # Cerca l'elemento nel database
-            risultato = collezione_elementi.find_one({"name": elemento}, {"_id": 0})
-            if risultato:
-                return func.HttpResponse(
-                    json.dumps(risultato),
-                    status_code=200,
-                    mimetype="application/json"
-                )
-            else:
-                return func.HttpResponse(
-                    f"L'elemento '{elemento}' non è stato trovato nel database.",
-                    status_code=404
-                )
-        else:
-            # Setup del database se nessun elemento è richiesto
-            create_db(client)
+        # Controlla se ci sono risultati
+        if not results:
             return func.HttpResponse(
-                "Database configurato correttamente!",
-                status_code=200
+                f"Nessun pediatra trovato con nome '{nome}'.",
+                status_code=404,
             )
 
-    except Exception as e:
-        logging.error(f"Errore durante il setup del database: {e}")
+        # Risultati della ricerca
+        response_data = {
+            "results": results
+        }
+
         return func.HttpResponse(
-            f"Errore: {str(e)}",
-            status_code=500
+            json.dumps(response_data, indent=4),
+            mimetype="application/json",
+        )
+
+    except Exception as e:
+        logging.error(f"Errore: {str(e)}")
+        return func.HttpResponse(
+            f"Errore interno del server: {str(e)}",
+            status_code=500,
         )
