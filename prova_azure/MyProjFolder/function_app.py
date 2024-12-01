@@ -1,16 +1,85 @@
 import logging
 import pymongo
+import urllib.request
+import json
+import pandas as pd
+import numpy as np
 import azure.functions as func
 
 app = func.FunctionApp()
 
 # Funzione per connettersi al database MongoDB
 def connect_to_mongodb():
-    # Inserisci l'URL di connessione direttamente nel codice
     mongo_uri = "mongodb+srv://jofrancalanci:Cf8m2xsQdZgll1hz@element.2o7dxct.mongodb.net/"
     client = pymongo.MongoClient(mongo_uri)
     db = client["Healthcare"]
     return db["Pediatri"]
+
+# Funzione principale per elaborare e inserire i dati in MongoDB
+def main():
+    url = 'https://dati.comune.milano.it/api/3/action/datastore_search?resource_id=22b05e1f-c5d2-4468-90e5-c098977856ef'
+    response = urllib.request.urlopen(url)
+    data = json.load(response)
+    records = data["result"]["records"]
+
+    # Converti i dati in un DataFrame
+    df = pd.DataFrame(records)
+
+    # Preprocessing
+    df = df.fillna({
+        'civico': 'N/A',
+        'luogo_ambulatorio': 'Milano'
+    })
+
+    # Converti la colonna 'dataNascita' in formato datetime
+    df['dataNascita'] = pd.to_datetime(df['dataNascita'], errors='coerce')
+
+    # Calcola l'età
+    df['età'] = df['dataNascita'].apply(calcola_eta)
+
+    # Standardizza la colonna 'tipoMedico'
+    df['tipoMedico'] = df['tipoMedico'].replace({
+        'PLS': 'Pediatra di Libera Scelta',
+        'Incaricato provvisorio Pediatra': 'Pediatra Incaricato Provvisorio'
+    })
+
+    # Converti 'attivo' e 'ambulatorioPrincipale' in booleani
+    df['attivo'] = df['attivo'].astype(bool, errors='ignore')
+    df['ambulatorioPrincipale'] = df['ambulatorioPrincipale'].astype(bool, errors='ignore')
+
+    # Crea la colonna 'nome_completo'
+    df['nome_completo'] = (df['nomeMedico'].astype(str) + ' ' + df['cognomeMedico'].astype(str)).str.title()
+
+    # Pulisci le colonne di testo
+    text_columns = ['nomeMedico', 'cognomeMedico', 'comune_medico', 'aft', 'via', 'luogo_ambulatorio', 'NIL']
+    for col in text_columns:
+        if col in df.columns:
+            df[col] = df[col].str.strip().str.title()
+
+    # Converti le coordinate in float
+    df['LONG_X_4326'] = pd.to_numeric(df['LONG_X_4326'], errors='coerce')
+    df['LAT_Y_4326'] = pd.to_numeric(df['LAT_Y_4326'], errors='coerce')
+
+    # Rimuovi colonne inutili
+    df = df.drop(columns=['nomeMedico', 'cognomeMedico'], errors='ignore')
+
+    # Trasforma i nomi delle colonne in "Title Case"
+    df.columns = df.columns.str.replace('_', ' ').str.title().str.replace(' ', '')
+
+    # Riordina le colonne
+    columns_order = ['IdMedico', 'NomeCompleto', 'CodiceRegionaleMedico', 
+                     'DataNascita', 'Età', 'TipoMedico', 'Attivo', 'AmbulatorioPrincipale', 'ComuneMedico', 
+                     'Aft', 'Via', 'Civico', 'LuogoAmbulatorio', 'Cap', 'Municipio', 'IdNil', 'Nil', 
+                     'LongX4326', 'LatY4326', 'Location']
+    existing_columns_order = [col for col in columns_order if col in df.columns]
+    df = df[existing_columns_order]
+
+    # Connessione a MongoDB e inserimento dei dati
+    collection = connect_to_mongodb()
+    collection.delete_many({})
+    data_dict = df.to_dict("records")
+    collection.insert_many(data_dict)
+    print(f"Inseriti {len(data_dict)} documenti nella collezione 'Pediatri'.")
 
 # Funzione per generare la pagina HTML con il form di ricerca
 def generate_html_form():
