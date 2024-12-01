@@ -193,6 +193,11 @@ def generate_html_results(results):
                 font-weight: bold;
                 color: #4CAF50;
             }
+            hr {
+                border: none;
+                border-top: 1px solid #4CAF50;
+                margin: 20px 0;
+            }
         </style>
     </head>
     <body>
@@ -210,6 +215,7 @@ def generate_html_results(results):
                 <p>CAP: <span>{pediatra.get('Cap', 'Non specificato')}</span></p>
                 <p>Municipio: <span>{pediatra.get('Municipio', 'Non specificato')}</span></p>
             </div>
+            <hr>
             """
     else:
         results_html += "<p>Nessun pediatra trovato con i criteri forniti.</p>"
