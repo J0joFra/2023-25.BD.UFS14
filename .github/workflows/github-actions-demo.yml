@@ -1,33 +1,17 @@
-name: GitHub Actions Demo
+name: GitHub Actions Demo      
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-24.04
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
-      
-      - name: List files in the repository
-        run: |
-          ls -R ${{ github.workspace }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - run: python --version
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10.12'
-          
-      - name: Install dependencies
-        run: |
-          pip install -U pytest
-          pip install -r Periodic_Table/requirements.txt
-      
-      - name: List files in Periodic_Table
-        run: |
-          cd Periodic_Table
-          ls -R
-
-      - name: Run tests
-        run: |
-          cd Periodic_Table
-          pytest .
+          python-version: '3.12' 
+      - run: uname -a
+      - run: pip install -U pytest
+      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.test.txt 
+      - run: pytest
