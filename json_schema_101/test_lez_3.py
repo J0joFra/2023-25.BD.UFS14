@@ -34,9 +34,9 @@ def test_function_output_with_snapshot(snapshot):
 
 
 frutti = """frutti,prezzo,colore,sapore
-pera,100,rossa,buono
-mela,10,blu,squisito
-ananas,23,turchino,piccante
+pera,75,verde,buono
+mela,30,rosso,gucci
+ananas,13,giallo, schifo
 """
 
 
