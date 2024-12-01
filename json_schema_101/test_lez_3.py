@@ -27,9 +27,9 @@ def validate_wrapper(instance, schema):
 
 def test_function_output_with_snapshot(snapshot):
     snapshot.snapshot_dir = 'snapshots'  # This line is optional.
-    pierino=func(5)
-    pierino_stringa=str(pierino)
-    snapshot.assert_match(pierino_stringa, 'foo_output.txt') 
+    test_func=func(5)
+    test_func_stringa=str(test_func)
+    snapshot.assert_match(test_func_stringa, 'foo_output.txt') 
 
 
 
