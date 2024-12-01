@@ -1,14 +1,13 @@
 import logging
 import pymongo
-import os
-import json
 import azure.functions as func
 
 app = func.FunctionApp()
 
 # Funzione per connettersi al database MongoDB
 def connect_to_mongodb():
-    mongo_uri = os.getenv("MONGO_URI")  # Usa una variabile d'ambiente per la sicurezza
+    # Inserisci l'URL di connessione direttamente nel codice
+    mongo_uri = "mongodb+srv://jofrancalanci:Cf8m2xsQdZgll1hz@element.2o7dxct.mongodb.net/"
     client = pymongo.MongoClient(mongo_uri)
     db = client["Healthcare"]
     return db["Pediatri"]
@@ -69,7 +68,12 @@ def generate_html_form():
         <h1>Ricerca Pediatri a Milano</h1>
         <div class="container">
             <form action="/api/PediatriSearch" method="get">
-                <input type="text" name="nome" placeholder="Inserisci il nome del pediatra" required><br>
+                <input type="text" name="nome" placeholder="Inserisci il nome o cognome del pediatra"><br>
+                <input type="text" name="zona" placeholder="Inserisci la zona"><br>
+                <input type="text" name="indirizzo" placeholder="Inserisci l'indirizzo"><br>
+                <input type="text" name="comune" placeholder="Inserisci il comune"><br>
+                <input type="text" name="cap" placeholder="Inserisci il CAP"><br>
+                <input type="text" name="municipio" placeholder="Inserisci il municipio"><br>
                 <button type="submit">Cerca</button>
             </form>
         </div>
@@ -131,11 +135,15 @@ def generate_html_results(results):
             results_html += f"""
             <div class="result">
                 <p>Nome: <span>{pediatra['NomeCompleto']}</span></p>
-                <p>Indirizzo: <span>{pediatra['Indirizzo']}</span></p>
+                <p>Indirizzo: <span>{pediatra['Via']} {pediatra['Civico']}</span></p>
+                <p>Zona: <span>{pediatra.get('Nil', 'Non specificata')}</span></p>
+                <p>Comune: <span>{pediatra.get('ComuneMedico', 'Non specificato')}</span></p>
+                <p>CAP: <span>{pediatra.get('Cap', 'Non specificato')}</span></p>
+                <p>Municipio: <span>{pediatra.get('Municipio', 'Non specificato')}</span></p>
             </div>
             """
     else:
-        results_html += "<p>Nessun pediatra trovato con il nome fornito.</p>"
+        results_html += "<p>Nessun pediatra trovato con i criteri forniti.</p>"
 
     results_html += """
         </div>
@@ -148,18 +156,41 @@ def generate_html_results(results):
 def search_pediatri(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Elaborazione della richiesta HTTP trigger per la ricerca dei pediatri.")
 
-    # Se nessun parametro di ricerca è fornito, mostra il form
+    # Recupera i parametri di ricerca
     nome = req.params.get("nome")
-    if not nome:
+    zona = req.params.get("zona")
+    indirizzo = req.params.get("indirizzo")
+    comune = req.params.get("comune")
+    cap = req.params.get("cap")
+    municipio = req.params.get("municipio")
+
+    # Se nessun parametro di ricerca è fornito, mostra il form
+    if not nome and not zona and not indirizzo and not comune and not cap and not municipio:
         return func.HttpResponse(generate_html_form(), mimetype="text/html", status_code=200)
 
     try:
         # Connessione al database MongoDB
         collection = connect_to_mongodb()
 
-        # Ricerca dei pediatri per nome
-        query = {"NomeCompleto": {"$regex": nome, "$options": "i"}}  # Ricerca case-insensitive
-        results = list(collection.find(query, {"_id": 0, "NomeCompleto": 1, "Indirizzo": 1}))
+        # Costruzione della query di ricerca dinamica
+        query = {}
+        if nome:
+            query["NomeCompleto"] = {"$regex": nome, "$options": "i"}
+        if zona:
+            query["Nil"] = {"$regex": zona, "$options": "i"} 
+        if indirizzo:
+            query["Via"] = {"$regex": indirizzo, "$options": "i"} 
+        if comune:
+            query["ComuneMedico"] = {"$regex": comune, "$options": "i"} 
+        if cap:
+            query["Cap"] = {"$regex": cap, "$options": "i"} 
+        if municipio:
+            query["Municipio"] = {"$regex": municipio, "$options": "i"} 
+
+        # Esecuzione della query di ricerca
+        results = list(collection.find(query, {
+            "_id": 0, "NomeCompleto": 1, "Via": 1, "Civico": 1, "Nil": 1, "ComuneMedico": 1, "Cap": 1, "Municipio": 1
+        }))
 
         # Genera i risultati in HTML
         return func.HttpResponse(generate_html_results(results), mimetype="text/html", status_code=200)
