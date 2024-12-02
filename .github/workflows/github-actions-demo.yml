@@ -26,8 +26,15 @@ jobs:
           pip install -U pip
           pip install -r requirements.txt
           pip install -r requirements.test.txt
-          echo "🥶Installare, ha installato🥶"
-        
+
+      - name: Messaggio di successo
+        if: success()
+        run: echo "🥶Installare, ha installato🥶"
+
+      - name: Messaggio di errore
+        if: failure()
+        run: echo "⚠️ Forse il codice ha bisogno di una pausa caffè ⚠️"
+
       - name: Esegui i test
         run: pytest --maxfail=5 
         continue-on-error: false # Fallisce in caso di errori nei test
