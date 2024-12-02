@@ -26,11 +26,10 @@ jobs:
           pip install -U pip
           pip install -r requirements.txt
           pip install -r requirements.test.txt
-        env:
-          CUSTOM_ENV_VAR: "Ciao a tutti voi che leggete, 🚀GitHub Actions!🚀"
+          echo "🥶Installare, ha installato🥶"
         
       - name: Esegui i test
-        run: pytest --maxfail=5 --disable-warnings
+        run: pytest --maxfail=5 
         continue-on-error: false # Fallisce in caso di errori nei test
         
       - name: Messaggio di successo
