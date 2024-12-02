@@ -1,17 +1,42 @@
-name: GitHub Actions Demo      
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: Demo GitHub Actions
+run-name: ${{ github.actor }} sta testando GitHub Actions 🚀
+
 on: [push]
+
 jobs:
-  Explore-GitHub-Actions:
+  Esplora-GitHub-Actions:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - run: python --version
-      - uses: actions/setup-python@v5
+      - name: Checkout del Repository
+        uses: actions/checkout@v4
+        
+      - name: Mostra la versione di Python
+        run: python --version
+        
+      - name: Configura l'ambiente Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12' 
-      - run: uname -a
-      - run: pip install -U pytest
-      - run: pip install -r requirements.txt
-      - run: pip install -r requirements.test.txt 
-      - run: pytest
+          python-version: '3.12'
+        
+      - name: Informazioni di sistema
+        run: uname -a
+        
+      - name: Installa le dipendenze
+        run: |
+          pip install -U pip
+          pip install -r requirements.txt
+          pip install -r requirements.test.txt
+        env:
+          CUSTOM_ENV_VAR: "Ciao a tutti voi che leggete, 🚀GitHub Actions!🚀"
+        
+      - name: Esegui i test
+        run: pytest --maxfail=5 --disable-warnings
+        continue-on-error: false # Fallisce in caso di errori nei test
+        
+      - name: Messaggio di successo
+        if: success()
+        run: echo "🎉 Menomale, tutti i passaggi completati con successo!"
+      
+      - name: Messaggio di errore
+        if: failure()
+        run: echo "⚠️ Mi sa che alcuni passaggi sono falliti! Controllare i log per i dettagli."
