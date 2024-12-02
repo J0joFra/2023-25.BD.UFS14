@@ -162,8 +162,8 @@ def generate_html_results(results):
         <style>
             body {
                 font-family: Arial, sans-serif;
-                background-color: #f0f8ff;
-                color: #333;
+                background-color: #f7f7f7; /* Grigio chiaro per il background */
+                color: #333; /* Testo principale nero scuro */
                 margin: 0;
                 padding: 0;
                 display: flex;
@@ -173,29 +173,29 @@ def generate_html_results(results):
                 flex-direction: column;
             }
             .container {
-                background-color: #fff;
+                background-color: #ffffff; /* Bianco per il contenitore */
                 padding: 20px;
                 border-radius: 8px;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
                 max-width: 800px;
                 width: 90%;
                 margin-top: 20px;
             }
             h1 {
-                color: #4CAF50;
+                color: #1e90ff; /* Blu acceso per il titolo */
             }
             .result {
                 margin-bottom: 15px;
                 font-size: 1.1rem;
-                color: #444;
+                color: #555; /* Grigio medio per i risultati */
             }
             .result span {
                 font-weight: bold;
-                color: #4CAF50;
+                color: #1e90ff; /* Blu acceso per i dettagli in evidenza */
             }
             hr {
                 border: none;
-                border-top: 1px solid #4CAF50;
+                border-top: 1px solid #1e90ff; /* Linea divisoria blu */
                 margin: 20px 0;
             }
         </style>
@@ -203,6 +203,10 @@ def generate_html_results(results):
     <body>
         <h1>Risultati Ricerca Pediatri</h1>
         <div class="container">
+            <!-- I risultati della ricerca verranno inseriti qui -->
+        </div>
+    </body>
+    </html>
     """
     if results:
         for pediatra in results:
